@@ -90,7 +90,6 @@ import software.amazon.awssdk.http.async.AsyncExecuteRequest;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.async.SdkHttpContentPublisher;
 import software.amazon.awssdk.http.nio.netty.internal.NettyConfiguration;
-import software.amazon.awssdk.http.nio.netty.internal.SdkChannelOptions;
 import software.amazon.awssdk.http.nio.netty.internal.SdkChannelPoolMap;
 import software.amazon.awssdk.utils.AttributeMap;
 
@@ -229,7 +228,7 @@ public class NettyNioAsyncHttpClientWireMockTest {
     public void closeClient_shouldCloseUnderlyingResources() {
         SdkEventLoopGroup eventLoopGroup = SdkEventLoopGroup.builder().build();
         ChannelPool channelPool = mock(ChannelPool.class);
-        SdkChannelPoolMap<URI, ChannelPool> sdkChannelPoolMap = new SdkChannelPoolMap<URI, ChannelPool>() {
+        SdkChannelPoolMap<URI, ? extends ChannelPool> sdkChannelPoolMap = new SdkChannelPoolMap<URI, ChannelPool>() {
             @Override
             protected ChannelPool newPool(URI key) {
                 return channelPool;
@@ -237,11 +236,10 @@ public class NettyNioAsyncHttpClientWireMockTest {
         };
 
         sdkChannelPoolMap.get(URI.create("http://blah"));
-        SdkChannelOptions channelOptions = new SdkChannelOptions();
         NettyConfiguration nettyConfiguration = new NettyConfiguration(AttributeMap.empty());
 
         SdkAsyncHttpClient customerClient =
-            new NettyNioAsyncHttpClient(eventLoopGroup, sdkChannelPoolMap, channelOptions, nettyConfiguration, 1);
+            new NettyNioAsyncHttpClient(eventLoopGroup, sdkChannelPoolMap, nettyConfiguration);
 
         customerClient.close();
         assertThat(eventLoopGroup.eventLoopGroup().isShuttingDown()).isTrue();
