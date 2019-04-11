@@ -15,8 +15,57 @@
 
 package software.amazon.awssdk.http.nio.netty.internal;
 
-/**
- * Class javadoc
- */
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static software.amazon.awssdk.http.SdkHttpConfigurationOption.GLOBAL_HTTP_DEFAULTS;
+
+import io.netty.handler.ssl.SslProvider;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import software.amazon.awssdk.http.Protocol;
+import software.amazon.awssdk.http.nio.netty.SdkEventLoopGroup;
+import software.amazon.awssdk.http.nio.netty.internal.AwaitCloseChannelPoolMap.SimpleChannelPoolAwareChannelPool;
+
 public class AwaitCloseChannelPoolMapTest {
+
+    private static AwaitCloseChannelPoolMap channelPoolMap;
+
+
+    @BeforeClass
+    public static void setup() {
+        channelPoolMap = AwaitCloseChannelPoolMap.builder()
+                                                 .sdkChannelOptions(new SdkChannelOptions())
+                                                 .sdkEventLoopGroup(SdkEventLoopGroup.builder().build())
+                                                 .configuration(new NettyConfiguration(GLOBAL_HTTP_DEFAULTS))
+                                                 .protocol(Protocol.HTTP1_1)
+                                                 .maxStreams(100)
+                                                 .sslProvider(SslProvider.OPENSSL)
+                                                 .build();
+    }
+
+    @Test
+    public void close_underlyingPoolsShouldBeClosed() throws ExecutionException, InterruptedException {
+
+        int numberOfChannelPools = 5;
+        List<SimpleChannelPoolAwareChannelPool> channelPools = new ArrayList<>();
+
+        for (int i = 0; i < numberOfChannelPools; i++) {
+            channelPools.add(
+                channelPoolMap.get(URI.create("http://" + RandomStringUtils.randomAlphabetic(2) + "localhost:" + numberOfChannelPools)));
+        }
+
+        assertThat(channelPoolMap.pools().size()).isEqualTo(numberOfChannelPools);
+
+        channelPoolMap.close();
+        channelPools.forEach(channelPool -> {
+            assertThat(channelPool.underlyingSimpleChannelPool().isClosed()).isDone();
+            assertThat(channelPool.underlyingSimpleChannelPool().isClosed().join()).isTrue();
+        });
+    }
+
 }

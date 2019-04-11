@@ -26,7 +26,7 @@ import software.amazon.awssdk.annotations.SdkInternalApi;
  */
 @SdkInternalApi
 public final class BetterSimpleChannelPool extends SimpleChannelPool {
-    private volatile CompletableFuture<Boolean> isClosed;
+    private final CompletableFuture<Boolean> isClosed;
 
     BetterSimpleChannelPool(Bootstrap bootstrap, ChannelPoolHandler handler) {
         super(bootstrap, handler);

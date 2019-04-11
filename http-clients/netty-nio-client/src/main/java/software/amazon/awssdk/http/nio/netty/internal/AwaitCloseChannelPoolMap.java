@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
 import software.amazon.awssdk.annotations.SdkInternalApi;
+import software.amazon.awssdk.annotations.SdkTestInternalApi;
 import software.amazon.awssdk.http.Protocol;
 import software.amazon.awssdk.http.nio.netty.SdkEventLoopGroup;
 import software.amazon.awssdk.http.nio.netty.internal.http2.HttpOrHttp2ChannelPool;
@@ -48,7 +49,8 @@ import software.amazon.awssdk.utils.Logger;
  * Implementation of {@link SdkChannelPoolMap} that awaits channel pools to be closed upon closing.
  */
 @SdkInternalApi
-public final class AwaitCloseChannelPoolMap extends SdkChannelPoolMap<URI, AwaitCloseChannelPoolMap.SimpleChannelPoolAwareChannelPool> {
+public final class AwaitCloseChannelPoolMap extends SdkChannelPoolMap<URI,
+    AwaitCloseChannelPoolMap.SimpleChannelPoolAwareChannelPool> {
 
     private static final Logger log = Logger.loggerFor(AwaitCloseChannelPoolMap.class);
 
@@ -100,12 +102,11 @@ public final class AwaitCloseChannelPoolMap extends SdkChannelPoolMap<URI, Await
         Collection<SimpleChannelPoolAwareChannelPool> channelPools = pools().values();
         super.close();
 
-        CompletableFuture[] completableFutures = channelPools.stream()
-                                                             .map(pool -> pool.underlyingSimpleChannelPool.isClosed())
-                                                             .toArray(CompletableFuture[]::new);
-
         try {
-            CompletableFuture.allOf(completableFutures).get(CHANNEL_POOL_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            CompletableFuture.allOf(channelPools.stream()
+                                                .map(pool -> pool.underlyingSimpleChannelPool.isClosed())
+                                                .toArray(CompletableFuture[]::new))
+                             .get(CHANNEL_POOL_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
@@ -163,7 +164,7 @@ public final class AwaitCloseChannelPoolMap extends SdkChannelPoolMap<URI, Await
         private final ChannelPool actualChannelPool;
 
         private SimpleChannelPoolAwareChannelPool(BetterSimpleChannelPool underlyingSimpleChannelPool,
-                                          ChannelPool actualChannelPool) {
+                                                  ChannelPool actualChannelPool) {
             this.underlyingSimpleChannelPool = underlyingSimpleChannelPool;
             this.actualChannelPool = actualChannelPool;
         }
@@ -191,6 +192,11 @@ public final class AwaitCloseChannelPoolMap extends SdkChannelPoolMap<URI, Await
         @Override
         public void close() {
             actualChannelPool.close();
+        }
+
+        @SdkTestInternalApi
+        BetterSimpleChannelPool underlyingSimpleChannelPool() {
+            return underlyingSimpleChannelPool;
         }
     }
 

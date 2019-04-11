@@ -228,7 +228,7 @@ public class NettyNioAsyncHttpClientWireMockTest {
     public void closeClient_shouldCloseUnderlyingResources() {
         SdkEventLoopGroup eventLoopGroup = SdkEventLoopGroup.builder().build();
         ChannelPool channelPool = mock(ChannelPool.class);
-        SdkChannelPoolMap<URI, ? extends ChannelPool> sdkChannelPoolMap = new SdkChannelPoolMap<URI, ChannelPool>() {
+        SdkChannelPoolMap<URI, ChannelPool> sdkChannelPoolMap = new SdkChannelPoolMap<URI, ChannelPool>() {
             @Override
             protected ChannelPool newPool(URI key) {
                 return channelPool;
