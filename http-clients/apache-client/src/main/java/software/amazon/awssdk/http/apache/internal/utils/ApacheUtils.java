@@ -24,6 +24,7 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.NTCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.BufferedHttpEntity;
 import org.apache.http.impl.auth.BasicScheme;
@@ -59,6 +60,9 @@ public final class ApacheUtils {
     public static HttpClientContext newClientContext(ProxyConfiguration proxyConfiguration) {
         HttpClientContext clientContext = new HttpClientContext();
         addPreemptiveAuthenticationProxy(clientContext, proxyConfiguration);
+        clientContext.setRequestConfig(RequestConfig.custom()
+                                                    .setNormalizeUri(false)
+                                                    .build());
         return clientContext;
 
     }

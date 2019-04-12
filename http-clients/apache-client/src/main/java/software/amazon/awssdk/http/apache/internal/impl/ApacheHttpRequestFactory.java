@@ -70,6 +70,7 @@ public class ApacheHttpRequestFactory {
                 .setConnectionRequestTimeout(connectAcquireTimeout)
                 .setConnectTimeout(connectTimeout)
                 .setSocketTimeout(saturatedCast(requestConfig.socketTimeout().toMillis()))
+                .setNormalizeUri(false)
                 .setLocalAddress(requestConfig.localAddress());
 
         /*
