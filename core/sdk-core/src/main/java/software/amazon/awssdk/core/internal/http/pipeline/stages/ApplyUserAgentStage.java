@@ -19,15 +19,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 import software.amazon.awssdk.annotations.SdkInternalApi;
 import software.amazon.awssdk.core.ApiName;
+import software.amazon.awssdk.core.ClientType;
 import software.amazon.awssdk.core.SdkSystemSetting;
 import software.amazon.awssdk.core.client.config.SdkAdvancedClientOption;
 import software.amazon.awssdk.core.client.config.SdkClientConfiguration;
+import software.amazon.awssdk.core.client.config.SdkClientOption;
 import software.amazon.awssdk.core.internal.http.HttpClientDependencies;
 import software.amazon.awssdk.core.internal.http.RequestExecutionContext;
 import software.amazon.awssdk.core.internal.http.pipeline.MutableRequestToRequestPipeline;
 import software.amazon.awssdk.core.internal.util.UserAgentUtils;
 import software.amazon.awssdk.http.SdkHttpFullRequest;
 import software.amazon.awssdk.utils.StringUtils;
+import software.amazon.awssdk.utils.http.SdkHttpUtils;
 
 /**
  * Apply any custom user agent supplied, otherwise instrument the user agent with info about the SDK and environment.
@@ -70,6 +73,19 @@ public class ApplyUserAgentStage implements MutableRequestToRequestPipeline {
             userAgent.append(SPACE).append(AWS_EXECUTION_ENV_PREFIX).append(awsExecutionEnvironment.trim());
         }
 
+        ClientType clientType = clientConfig.option(SdkClientOption.CLIENT_TYPE);
+
+        if (clientType == null) {
+            clientType = ClientType.UNKNOWN;
+        }
+
+        String clientName = clientName(clientType);
+
+        userAgent.append(SPACE)
+                     .append(StringUtils.lowerCase(clientType.name()))
+                     .append("/")
+                     .append(SdkHttpUtils.urlEncode(clientName));
+
         if (!requestApiNames.isEmpty()) {
             String requestUserAgent = requestApiNames.stream()
                     .map(n -> n.name() + "/" + n.version())
@@ -93,5 +109,17 @@ public class ApplyUserAgentStage implements MutableRequestToRequestPipeline {
         }
 
         return userAgent.toString();
+    }
+
+    private String clientName(ClientType clientType) {
+        if (clientType.equals(ClientType.SYNC)) {
+            return clientConfig.option(SdkClientOption.SYNC_HTTP_CLIENT).clientName();
+        }
+
+        if (clientType.equals(ClientType.ASYNC)) {
+            return clientConfig.option(SdkClientOption.ASYNC_HTTP_CLIENT).clientName();
+        }
+
+        return ClientType.UNKNOWN.name();
     }
 }
