@@ -105,7 +105,7 @@
         <org.eclipse.text.version>3.5.101</org.eclipse.text.version>
         <rxjava.version>2.1.9</rxjava.version>
         <commons-codec.verion>1.10</commons-codec.verion>
-        <jmh.version>1.21</jmh.version>
+        <jmh.version>1.25.1</jmh.version>
 
         <!-- Test dependencies -->
         <junit.version>4.12</junit.version>
