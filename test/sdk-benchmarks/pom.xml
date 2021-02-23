@@ -47,7 +47,7 @@
           -->
         <uberjar.name>benchmarks</uberjar.name>
 
-        <sdk-v1.version>1.11.404</sdk-v1.version>
+        <sdk-v1.version>1.11.898</sdk-v1.version>
         <jackson.version>2.9.6</jackson.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
     </properties>
@@ -314,8 +314,7 @@
                             </includes>
                             </artifactSet>
                             <transformers>
-                                <transformer
-                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
                                         <Main-Class>org.openjdk.jmh.Main</Main-Class>
                                     </manifestEntries>
